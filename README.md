@@ -1,88 +1,185 @@
-# AI Career Intelligence Platform (MERN)
+# AI Career Intelligence Platform
 
-Track job applications, analyze your resume with AI, match it against job descriptions, practice interviews, and get career recommendations.
+> Track job applications, analyze your resume with AI, match it against job descriptions, practice mock interviews, and get personalized career recommendations, all in one MERN application.
 
-A MERN app: **M**ongoDB · **E**xpress · **R**eact · **N**ode. The AI features run inside the Express backend, so there are only two apps to run.
+![Node](https://img.shields.io/badge/Node-18%2B-339933?logo=node.js&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![MongoDB](https://img.shields.io/badge/MongoDB-7-47A248?logo=mongodb&logoColor=white)
+![Express](https://img.shields.io/badge/Express-API-000000?logo=express&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-06B6D4?logo=tailwindcss&logoColor=white)
 
-```
-React (Vite + Tailwind + Recharts)  ->  Express API (Node)  ->  MongoDB
-                                             |
-                                             +-->  services/ai/*  ->  LLM API (optional)
-```
+---
 
-| Folder | What it is |
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Getting Started](#getting-started)
+- [Configuration](#configuration)
+- [LLM vs. Rule-Based Mode](#llm-vs-rule-based-mode)
+- [Project Structure](#project-structure)
+- [API Reference](#api-reference)
+- [Deployment](#deployment)
+- [Production Notes](#production-notes)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Overview
+
+The **AI Career Intelligence Platform** is a full-stack MERN application (**M**ongoDB, **E**xpress, **R**eact, **N**ode.js) that helps job seekers manage their search and improve their candidacy. All AI features run inside the Express backend, so there are only two apps to run: the API and the frontend.
+
+## Features
+
+| Feature | Description |
 |---|---|
-| `frontend/` | React 18, Vite, Tailwind CSS 3, Recharts, React Router |
-| `backend/` | Node + Express, Mongoose, JWT + bcrypt, Multer, and the AI modules in `backend/services/ai/` |
+| **Resume Analyzer** | Upload a PDF resume and receive a score, section analysis, and improvement suggestions. |
+| **Job Description Matcher** | Compare your resume against a job description to see match score and skill gaps. |
+| **Application Tracker** | Create, update, and manage job applications through your pipeline. |
+| **AI Interviewer** | Practice with tailored interview questions and get graded feedback with an end-of-session report. |
+| **Career Recommendations** | Receive personalized career-path analysis based on your profile. |
+| **Dashboard** | Aggregated charts and insights across all your activity. |
+| **Authentication** | JWT-based auth with bcrypt password hashing and password reset flow. |
 
-## Run locally
+## Tech Stack
 
-You need Node 18+ and a MongoDB instance (local, Docker, or Atlas).
+| Layer | Technologies |
+|---|---|
+| **Frontend** | React 18, Vite, Tailwind CSS 3, Recharts, React Router |
+| **Backend** | Node.js, Express, Mongoose, JWT, bcrypt, Multer |
+| **Database** | MongoDB |
+| **AI** | Groq-hosted LLM (optional) with rule-based fallbacks |
+
+## Architecture
+
+```
+React (Vite + Tailwind + Recharts)
+            │
+            ▼
+     Express API (Node)  ──►  MongoDB
+            │
+            └──►  services/ai/*  ──►  LLM API (optional)
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- **Node.js** 18 or later
+- **MongoDB**: local install, Docker, or [MongoDB Atlas](https://www.mongodb.com/atlas)
+
+### 1. Start MongoDB (skip if you already have an instance)
 
 ```bash
-# 0. MongoDB (skip if you already have one)
 docker run -d -p 27017:27017 --name mongo mongo:7
+```
 
-# 1. Backend  (http://localhost:5000)
+### 2. Run the backend (`http://localhost:5000`)
+
+```bash
 cd backend
 npm install
-cp .env      # set JWT_SECRET (and MONGO_URI if not local)
-npm run dev
-
-# 2. Frontend  (http://localhost:5173)
-cd frontend
-npm install
-cp .env
+cp .env.example .env   # then set JWT_SECRET (and MONGO_URI if not local)
 npm run dev
 ```
 
-Register an account, upload a PDF resume, then explore.
+### 3. Run the frontend (`http://localhost:5173`)
 
-## LLM vs. rule-based mode
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
 
-The AI features work **without any API key**: every one has a rule-based
-fallback (skill dictionary, section/metric heuristics, a question bank).
+Open the app, register an account, upload a PDF resume, and start exploring.
 
-Put `GROQ_API_KEY` in `backend/.env` and restart to switch on LLM-powered
-resume review, tailored interview questions, real answer grading and
-personalised career recommendations.
+---
 
-The model is configured using:
+## Configuration
 
-`LLM_MODEL=openai/gpt-oss-120b`
+### Backend (`backend/.env`)
+
+| Variable | Required | Description |
+|---|---|---|
+| `MONGO_URI` | Yes (if not local) | MongoDB connection string. |
+| `JWT_SECRET` | Yes | Long, random secret used to sign JWTs. |
+| `CLIENT_URL` | Production | Allowed frontend origin for CORS. |
+| `NODE_ENV` | No | Set to `production` when deployed. |
+| `GROQ_API_KEY` | No | Enables LLM-powered features. |
+| `LLM_MODEL` | No | Model name, e.g. `openai/gpt-oss-120b`. |
+
+### Frontend (`frontend/.env`)
+
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_API_URL` | Yes | Backend API base URL, e.g. `http://localhost:5000/api`. |
+
+---
+
+## LLM vs. Rule-Based Mode
+
+Every AI feature works **without an API key** thanks to built-in rule-based fallbacks (skill dictionary, section and metric heuristics, and a question bank).
+
+To enable LLM-powered resume review, tailored interview questions, real answer grading, and personalized career recommendations, add the following to `backend/.env` and restart:
+
+```env
+GROQ_API_KEY=your_api_key_here
+LLM_MODEL=openai/gpt-oss-120b
+```
 
 If an LLM call fails, the app silently falls back to the rule-based result.
 
-Be aware of what the fallback can and cannot do:
+### Fallback limitations
 
-- Resume scores and job-match scores are heuristics: useful for relative comparison, not a real ATS result.
-- Skill extraction only knows the skills in `backend/services/ai/skills.js`; extend that dictionary for your field.
-- Interview answer grading without an LLM only looks at length, structure and keyword coverage. It cannot judge technical correctness.
-- "Confidence" in the interview report is an estimate from score consistency and communication, not measured directly.
+- Resume and job-match scores are heuristics: useful for relative comparison, **not** a real ATS result.
+- Skill extraction only recognizes skills listed in `backend/services/ai/skills.js`. Extend that dictionary for your field.
+- Interview grading without an LLM only considers length, structure, and keyword coverage. It cannot judge technical correctness.
+- The interview "confidence" metric is an estimate derived from score consistency and communication, not a direct measurement.
 
-## Backend layout
+---
+
+## Project Structure
 
 ```
 backend/
-  server.js
-  config/db.js
-  models/        User, Resume, Job, Application, Interview
-  controllers/   auth, resume, job (matcher + tracker), interview, dashboard
-  routes/        auth, resume, job, interview, dashboard, career
-  middleware/    authMiddleware (JWT), uploadMiddleware (Multer, PDF only, 5 MB)
-  services/
-    aiService.js         facade used by the controllers
-    ai/                  skills, llm, pdfParser, resumeAnalyzer, jobMatcher, interviewEngine, career
+├── server.js
+├── config/
+│   └── db.js
+├── models/            # User, Resume, Job, Application, Interview
+├── controllers/       # auth, resume, job (matcher + tracker), interview, dashboard
+├── routes/            # auth, resume, job, interview, dashboard, career
+├── middleware/
+│   ├── authMiddleware.js     # JWT verification
+│   └── uploadMiddleware.js   # Multer, PDF only, 5 MB limit
+└── services/
+    ├── aiService.js          # Facade used by controllers
+    └── ai/                   # skills, llm, pdfParser, resumeAnalyzer,
+                              # jobMatcher, interviewEngine, career
+
+frontend/
+└── React + Vite application
 ```
 
-## API overview
+---
 
-All routes except the public auth ones need `Authorization: Bearer <JWT>`.
+## API Reference
 
-| Route | Purpose |
+All routes except the public auth endpoints require the header:
+
+```
+Authorization: Bearer <JWT>
+```
+
+| Method & Route | Purpose |
 |---|---|
-| `POST /api/auth/register`, `/login`, `/forgot-password`, `/reset-password/:token` | Auth |
-| `GET /api/auth/me`, `PUT /api/auth/profile`, `PUT /api/auth/password` | Profile |
+| `POST /api/auth/register` · `/login` · `/forgot-password` · `/reset-password/:token` | Authentication |
+| `GET /api/auth/me` · `PUT /api/auth/profile` · `PUT /api/auth/password` | Profile management |
 | `POST /api/resume/upload` (field `resume`, PDF) · `GET /api/resume` · `DELETE /api/resume/:id` | Resume analyzer |
 | `POST /api/jobs/match` · `GET /api/jobs/matches` | Job description matcher |
 | `GET/POST /api/jobs/applications` · `PUT/DELETE /api/jobs/applications/:id` | Application tracker |
@@ -90,14 +187,46 @@ All routes except the public auth ones need `Authorization: Bearer <JWT>`.
 | `GET /api/dashboard` | Aggregated chart data |
 | `POST /api/career/recommendations` | Career analysis |
 
-## Notes
-
-- **Password reset**: no email provider is configured. The reset link is printed in the backend console and, when `NODE_ENV` is not `production`, shown on the forgot-password page. Plug a mailer (Resend, SendGrid, Nodemailer) into `forgotPassword` in `backend/controllers/authController.js` before going live.
-- **File storage**: uploaded PDFs are saved to `backend/uploads/` on local disk. Render/Railway disks are ephemeral by default, so for production use object storage (S3, Cloudinary) or a persistent disk. Extracted text is stored in MongoDB, so analysis still works if the file disappears.
-- **Security before deploying**: set a long random `JWT_SECRET`, restrict `CLIENT_URL` (CORS), and add rate limiting (`express-rate-limit`) on the auth and AI routes, since the AI routes can spend LLM credits.
+---
 
 ## Deployment
 
-- **Backend (Render/Railway)**: root `backend`, build `npm install`, start `npm start`. Env: `MONGO_URI` (MongoDB Atlas), `JWT_SECRET`, `CLIENT_URL` (your Vercel URL), `NODE_ENV=production`, optional `GROQ_API_KEY`.
-- **Frontend (Vercel)**: root `frontend`, build `npm run build`, output `dist`, env `VITE_API_URL=https://<your-backend>/api`. The included `vercel.json` handles client-side routing.
-- Deploy the backend first (you need its URL for the frontend), then set the backend's `CLIENT_URL` to the final Vercel URL, because CORS blocks requests otherwise.
+Deploy the **backend first**, since the frontend needs its URL. Then set the backend's `CLIENT_URL` to the final frontend URL, otherwise CORS will block requests.
+
+### Backend (Render / Railway)
+
+| Setting | Value |
+|---|---|
+| Root directory | `backend` |
+| Build command | `npm install` |
+| Start command | `npm start` |
+| Environment | `MONGO_URI` (Atlas), `JWT_SECRET`, `CLIENT_URL` (your Vercel URL), `NODE_ENV=production`, optional `GROQ_API_KEY` |
+
+### Frontend (Vercel)
+
+| Setting | Value |
+|---|---|
+| Root directory | `frontend` |
+| Build command | `npm run build` |
+| Output directory | `dist` |
+| Environment | `VITE_API_URL=https://<your-backend>/api` |
+
+The included `vercel.json` handles client-side routing.
+
+---
+
+
+
+## Contributing
+
+Contributions are welcome.
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes: `git commit -m "Add your feature"`
+4. Push to the branch: `git push origin feature/your-feature`
+5. Open a pull request
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for details.
